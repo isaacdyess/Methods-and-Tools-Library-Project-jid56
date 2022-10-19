@@ -1,6 +1,5 @@
 import sqlite3
 import uuid
-
 from Classes import User
 from Classes import Book
 from Classes import Cart
@@ -48,6 +47,8 @@ def beforeLoginMenu():
     elif option == "2":
         createAccount()
     elif option == "3":
+        curser.close()
+        connection.close()
         exit()
 
 # Before login - Menu option 1
@@ -55,13 +56,26 @@ def login():
     print("----- Logging in -----")
     username = input("Username: ")
     password = input("Password: ")
-    afterLoginMenu()
+    curser.execute("SELECT * FROM Users WHERE userName = (?) AND password = (?)", (username, password,))
+    userFetch = curser.fetchall()
+    if len(userFetch) == 1:
+        currentUser = userFetch[0]
+        afterLoginMenu()
+    else:
+        print("Error. Please try again.")
+        login()
 
 # Before login - Menu option 2
 def createAccount():
     print("----- Creating account -----")
+    firstName = input("First name: ")
+    lastName = input("Last name: ")
     username = input("Username: ")
     password = input("Password: ")
+    address = input("Address: ")
+    payment = input("Credit card number: ")
+    curser.execute("INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?)", (str(uuid.uuid1()), firstName, lastName, username, password, address, payment))
+    connection.commit()
     beforeLoginMenu()
 
 # Before login - Menu option 3
@@ -86,8 +100,9 @@ def afterLoginMenu():
 
 # After login - Menu option 1
 def viewAllBooks():
-    curser.execute("SELECT * FROM Books")
-    print(curser.fetchall())
+    books = curser.execute("SELECT * FROM Books")
+    for book in books:
+        print("- ", book[2])
     print("1. Go back")
     print("2. Add book to cart")
     option = input()
@@ -101,7 +116,9 @@ def viewAllBooks():
 # After login - Menu option 2
 def viewAllCategories():
     print("----- All categories -----")
-    print("TODO: GET CATEGORIES FROM BOOKS TABLE")
+    categories = curser.execute("SELECT DISTINCT category FROM Books")
+    for category in categories:
+        print("- ", category[0])
     print("1. Go back")
     print("2. See all books for specific category")
     option = input()
@@ -167,7 +184,7 @@ def seeAllBooksForCategory(category):
         addBookToCart(book=book)
 
 def addBookToCart(book):
-    print("TODO: Add book to cart")
+    print("TODO: Add book to cart using current user")
 
 def removeBookFromCart(book):
     print("TODO: Remove book from cart")
@@ -202,4 +219,5 @@ createAllTables()
 if False:
     resetBooksTable()
 
+currentUser = User()
 beforeLoginMenu()
