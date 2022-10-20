@@ -6,13 +6,15 @@ from Classes import Cart
 from Classes import History
 
 def createAllTables():
-    curser.execute("CREATE TABLE IF NOT EXISTS Users(id TEXT PRIMARY KEY, firstName TEXT, lastName TEXT, userName TEXT, password TEXT, address TEXT, payment TEXT)")
-    curser.execute("CREATE TABLE IF NOT EXISTS Books(id TEXT PRIMARY KEY, ISBN TEXT, title TEXT, author TEXT, category TEXT, stock INTEGER)")
-    curser.execute("CREATE TABLE IF NOT EXISTS Carts(id TEXT PRIMARY KEY, user TEXT)")
-    curser.execute("CREATE TABLE IF NOT EXISTS OrderHistory(id TEXT PRIMARY KEY, user TEXT)")
+    curser.execute("CREATE TABLE IF NOT EXISTS Users(id TEXT PRIMARY KEY, firstName TEXT, lastName TEXT, userName TEXT, password TEXT, address TEXT, creditCardNumber TEXT)")
+    curser.execute("CREATE TABLE IF NOT EXISTS Books(id TEXT PRIMARY KEY, ISBN TEXT, title TEXT, author TEXT, cat TEXT, stock INTEGER)")
+    curser.execute("CREATE TABLE IF NOT EXISTS Carts(id TEXT PRIMARY KEY, bookID TEXT, userID TEXT)")
+    curser.execute("CREATE TABLE IF NOT EXISTS OrderHistory(id TEXT PRIMARY KEY, userID TEXT)")
+    connection.commit()
 
 def resetUsersTable():
     curser.execute("DELETE FROM Users")
+    connection.commit()
 
 def resetBooksTable():
     curser.execute("DELETE FROM Books")
@@ -28,14 +30,17 @@ def resetBooksTable():
     createBook(str(uuid.uuid1()), '978-0062387240', 'Divergent', 'Veronica Roth', 'Fiction', 10)
     connection.commit()
 
-def createBook(id, ISBN, title, author, category, stock):
-    curser.execute("INSERT INTO Books VALUES (?, ?, ?, ?, ?, ?)", (id, ISBN, title, author, category, stock))
+def createBook(id, ISBN, title, author, genre, stock):
+    curser.execute("INSERT INTO Books VALUES (?, ?, ?, ?, ?, ?)", (id, ISBN, title, author, genre, stock))
+    connection.commit()
 
 def resetCartsTable():
     curser.execute("DELETE FROM Carts")
+    connection.commit()
 
 def resetOrderHistoryTable():
     curser.execute("DELETE FROM OrderHistory")
+    connection.commit()
 
 def beforeLoginMenu():
     print("1. Login")
@@ -59,11 +64,17 @@ def login():
     curser.execute("SELECT * FROM Users WHERE userName = (?) AND password = (?)", (username, password,))
     userFetch = curser.fetchall()
     if len(userFetch) == 1:
-        currentUser = userFetch[0]
+        currentUserID = userFetch[0][0]
         afterLoginMenu()
     else:
         print("Error. Please try again.")
-        login()
+        print("1. Go back")
+        print("2. Login")
+        option = input()
+        if option == "1":
+            beforeLoginMenu()
+        elif option == "2":
+            login()
 
 # Before login - Menu option 2
 def createAccount():
@@ -85,7 +96,7 @@ def exit():
 def afterLoginMenu():
     print("----- Main Menu -----")
     print("1. View all books")
-    print("2. View all categories")
+    print("2. View all genres")
     print("3. View shopping cart")
     print("4. View account")
     option = input()
@@ -100,33 +111,36 @@ def afterLoginMenu():
 
 # After login - Menu option 1
 def viewAllBooks():
-    books = curser.execute("SELECT * FROM Books")
+    curser.execute("SELECT * FROM Books") #TODO: Only need to fetch titles
+    books = curser.fetchall()
+    index = 1
     for book in books:
-        print("- ", book[2])
-    print("1. Go back")
+        print(str(index) + ". " + book[2])
+        index += 1
+    print("\n1. Go back")
     print("2. Add book to cart")
     option = input()
     if option == "1":
         afterLoginMenu()
     elif option == "2":
-        book = input("Book #:")
-        addBookToCart(book)
+        bookNumber = input("Book #:")
+        addBookToCart(books[int(bookNumber)][0])
         afterLoginMenu()
 
 # After login - Menu option 2
 def viewAllCategories():
     print("----- All categories -----")
-    categories = curser.execute("SELECT DISTINCT category FROM Books")
-    for category in categories:
-        print("- ", category[0])
+    genres = curser.execute("SELECT DISTINCT genre FROM Books")
+    for genre in genres:
+        print("- ", genre[0])
     print("1. Go back")
-    print("2. See all books for specific category")
+    print("2. See all books for specific genre")
     option = input()
     if option == "1":
         afterLoginMenu()
     elif option == "2":
-        category = input("Category #: ")
-        seeAllBooksForCategory(category)
+        genre = input("Genre #: ")
+        seeAllBooksForGenre(genre)
 
 # After login - Menu option 3
 def viewShoppingCart():
@@ -168,12 +182,12 @@ def viewAccount():
         deleteAccount()
 
 def logout():
-    print("TODO: LOGOUT")
+    currentUserID = ""
     beforeLoginMenu()
 
-def seeAllBooksForCategory(category):
-    print("----- All books for ", category, "-----")
-    print("TODO: GET BOOKS FOR CATEGORY FROM BOOKS TABLE")
+def seeAllBooksForGenre(genre):
+    print("----- All books for ", genre, "-----")
+    print("TODO: GET BOOKS FOR genre FROM BOOKS TABLE")
     print("1. Go back")
     print("2. Add book to cart")
     option = input()
@@ -181,10 +195,11 @@ def seeAllBooksForCategory(category):
         viewAllCategories()
     if option == "2":
         book = input("Book #: ")
-        addBookToCart(book=book)
+        addBookToCart(book)
 
-def addBookToCart(book):
-    print("TODO: Add book to cart using current user")
+def addBookToCart(bookID):
+    curser.execute("INSERT INTO Carts VALUES (?, ?, ?)", (str(uuid.uuid1()), bookID, currentUserID))
+    connection.commit()
 
 def removeBookFromCart(book):
     print("TODO: Remove book from cart")
@@ -218,6 +233,9 @@ createAllTables()
 
 if False:
     resetBooksTable()
+    resetCartsTable()
+    resetOrderHistoryTable()
+    resetUsersTable()
 
-currentUser = User()
+currentUserID = ""
 beforeLoginMenu()
