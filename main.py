@@ -46,6 +46,7 @@ def beforeLoginMenu():
     print("1. Login")
     print("2. Create account")
     print("3. Exit")
+    print("4. (ADMIN) View Users")
     option = input()
     if option == "1":
         login()
@@ -55,6 +56,8 @@ def beforeLoginMenu():
         curser.close()
         connection.close()
         exit()
+    elif option == "4":
+        viewAllUsers()
 
 # Before login - Menu option 1
 def login():
@@ -64,6 +67,7 @@ def login():
     curser.execute("SELECT * FROM Users WHERE userName = (?) AND password = (?)", (username, password,))
     userFetch = curser.fetchall()
     if len(userFetch) == 1:
+        global currentUserID
         currentUserID = userFetch[0][0]
         afterLoginMenu()
     else:
@@ -222,8 +226,25 @@ def changePaymentInfo():
     viewAccount()
 
 def deleteAccount():
-    print("TODO: Delete account")
-    beforeLoginMenu()
+    print("Deleting account " + currentUserID + "\n")
+    curser.execute("DELETE FROM Users WHERE id = ?", (currentUserID,))
+    connection.commit()
+    logout()
+
+# Before login, option 4 for test
+def viewAllUsers():
+    curser.execute("SELECT * FROM Users")
+    users = curser.fetchall()
+    index = 1
+    for user in users:
+        print(str(index) + ". " + user[0] + ", " + user[3])
+        index += 1
+    print("\n1. Go back")
+    option = input()
+    if option == "1":
+        beforeLoginMenu()
+    else:
+        beforeLoginMenu()
 
 # Start program
 connection = sqlite3.connect("LibraryProject.db")
