@@ -164,8 +164,16 @@ def viewAllCategories():
 # After login - Menu option 3
 def viewShoppingCart():
     print("----- Shopping Cart -----")
-    print("TODO: GET BOOKS IN USER'S SHOPPING CART FROM CARTS TABLE")
-    print("1. Go back")
+    curser.execute("SELECT * FROM Carts WHERE userID = ?", (currentUserID,))
+    books = curser.fetchall()
+    index = 1
+    for book in books:
+        curser.execute("SELECT title FROM Books WHERE id = ?", (book[1],))
+        title = curser.fetchall()
+        print(str(index) + ". " + title[0][0])
+        index += 1
+
+    print("\n1. Go back")
     print("2. Remove book from cart")
     print("3. Checkout")
     option = input()
@@ -217,6 +225,7 @@ def seeAllBooksForGenre(genre):
         addBookToCart(book)
 
 def addBookToCart(bookID):
+    print("Inserting: " + bookID)
     curser.execute("INSERT INTO Carts VALUES (?, ?, ?)", (str(uuid.uuid1()), bookID, currentUserID))
     connection.commit()
 
