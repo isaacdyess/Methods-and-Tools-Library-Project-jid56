@@ -238,7 +238,19 @@ def checkout():
     viewShoppingCart()
 
 def viewOrderHistory():
-    print("TODO: View order history")
+    print("----- Order History -----")
+    curser.execute("SELECT * FROM OrderHistory WHERE userID = ?", (currentUserID,))
+    books = curser.fetchall()
+
+    if len(books) == 0:
+        print("No items have been added to this table")
+    else:
+        index = 1
+        for book in books:
+            curser.execute("SELECT title FROM Books WHERE id = ?", (book[1],))
+            title = curser.fetchall()
+            print(str(index) + ". " + title[0][0])
+            index += 1
     viewAccount()
 
 def changeAddress():
