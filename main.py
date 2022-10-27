@@ -230,7 +230,8 @@ def addBookToCart(bookID):
     connection.commit()
 
 def removeBookFromCart(book):
-    print("TODO: Remove book from cart")
+    print("Removing: " + book)
+    curser.execute("DELETE FROM Carts WHERE userID = ? AND bookID = ?", (currentUserID, book))
     viewShoppingCart()
 
 def checkout():
@@ -254,11 +255,16 @@ def viewOrderHistory():
     viewAccount()
 
 def changeAddress():
-    print("TODO: Change address")
+    print("Enter new address: ")
+    newAdd = input()
+    curser.execute("UPDATE Users SET address = ? WHERE userID = ?", newAdd, currentUserID)
     viewAccount()
 
 def changePaymentInfo():
-    print("TODO: Change payment info")
+    print("Enter new credit card number: ")
+    newPay = input()
+    print("Updating payment info.\n")
+    curser.execute("UPDATE Users SET creditCardNumber = ? WHERE userID = ?", newPay, currentUserID)
     viewAccount()
 
 def deleteAccount():
