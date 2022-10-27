@@ -143,7 +143,7 @@ def viewAllBooks():
         afterLoginMenu()
     elif option == "2":
         bookNumber = input("Book #:")
-        addBookToCart(books[int(bookNumber)][0])
+        addBookToCart(books[int(bookNumber) -1][0])
         afterLoginMenu()
 
 # After login - Menu option 2
@@ -181,7 +181,8 @@ def viewShoppingCart():
         afterLoginMenu()
     elif option == "2":
         book = input("Book #: ")
-        removeBookFromCart(book)
+        cartID = books[int(book) - 1][0]
+        removeBookFromCart(cartID)
     elif option == "3":
         checkout()
 
@@ -229,9 +230,9 @@ def addBookToCart(bookID):
     curser.execute("INSERT INTO Carts VALUES (?, ?, ?)", (str(uuid.uuid1()), bookID, currentUserID))
     connection.commit()
 
-def removeBookFromCart(book):
-    print("Removing: " + book)
-    curser.execute("DELETE FROM Carts WHERE userID = ? AND bookID = ?", (currentUserID, book))
+def removeBookFromCart(cartID):
+    curser.execute("DELETE FROM Carts WHERE userID = ? AND id = ?", (currentUserID, cartID))
+    connection.commit()
     viewShoppingCart()
 
 def checkout():
@@ -257,14 +258,15 @@ def viewOrderHistory():
 def changeAddress():
     print("Enter new address: ")
     newAdd = input()
-    curser.execute("UPDATE Users SET address = ? WHERE userID = ?", newAdd, currentUserID)
+    curser.execute("UPDATE Users SET address = ? WHERE id = ?", (newAdd, currentUserID))
+    connection.commit()
     viewAccount()
 
 def changePaymentInfo():
-    print("Enter new credit card number: ")
-    newPay = input()
+    newPay = input("Enter new credit card number: ")
     print("Updating payment info.\n")
-    curser.execute("UPDATE Users SET creditCardNumber = ? WHERE userID = ?", newPay, currentUserID)
+    curser.execute("UPDATE Users SET creditCardNumber = ? WHERE id = ?", (newPay, currentUserID))
+    connection.commit()
     viewAccount()
 
 def deleteAccount():
