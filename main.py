@@ -9,7 +9,7 @@ def createAllTables():
     curser.execute("CREATE TABLE IF NOT EXISTS Users(id TEXT PRIMARY KEY, firstName TEXT, lastName TEXT, userName TEXT, password TEXT, address TEXT, creditCardNumber TEXT)")
     curser.execute("CREATE TABLE IF NOT EXISTS Books(id TEXT PRIMARY KEY, ISBN TEXT, title TEXT, author TEXT, cat TEXT, stock INTEGER)")
     curser.execute("CREATE TABLE IF NOT EXISTS Carts(id TEXT PRIMARY KEY, bookID TEXT, userID TEXT)")
-    curser.execute("CREATE TABLE IF NOT EXISTS OrderHistory(id TEXT PRIMARY KEY, userID TEXT)")
+    curser.execute("CREATE TABLE IF NOT EXISTS OrderHistory(id TEXT PRIMARY KEY, userID TEXT, bookID TEXT)")
     connection.commit()
 
 def resetUsersTable():
@@ -43,10 +43,14 @@ def resetOrderHistoryTable():
     connection.commit()
 
 def beforeLoginMenu():
+    print("----- Main Menu -----")
     print("1. Login")
     print("2. Create account")
     print("3. Exit")
     print("4. (ADMIN) View Users")
+    print("5. (ADMIN) View Books")
+    print("6. (ADMIN) View Carts")
+    print("7. (ADMIN) View Order History")
     option = input()
     if option == "1":
         login()
@@ -57,11 +61,21 @@ def beforeLoginMenu():
         connection.close()
         exit()
     elif option == "4":
-        viewAllUsers()
+        adminViewAllUsers()
+        beforeLoginMenu()
+    elif option == "5":
+        adminViewAllBooks()
+        beforeLoginMenu()
+    elif option == "6":
+        adminViewAllCarts()
+        beforeLoginMenu()
+    elif option == "7":
+        adminViewAllOrderHistory()
+        beforeLoginMenu()
 
 # Before login - Menu option 1
 def login():
-    print("----- Logging in -----")
+    print("----- Logging In -----")
     username = input("Username: ")
     password = input("Password: ")
     curser.execute("SELECT * FROM Users WHERE userName = (?) AND password = (?)", (username, password,))
@@ -82,7 +96,7 @@ def login():
 
 # Before login - Menu option 2
 def createAccount():
-    print("----- Creating account -----")
+    print("----- Creating Account -----")
     firstName = input("First name: ")
     lastName = input("Last name: ")
     username = input("Username: ")
@@ -115,7 +129,8 @@ def afterLoginMenu():
 
 # After login - Menu option 1
 def viewAllBooks():
-    curser.execute("SELECT * FROM Books") #TODO: Only need to fetch titles
+    print("----- All Books -----")
+    curser.execute("SELECT * FROM Books")
     books = curser.fetchall()
     index = 1
     for book in books:
@@ -133,7 +148,7 @@ def viewAllBooks():
 
 # After login - Menu option 2
 def viewAllCategories():
-    print("----- All categories -----")
+    print("----- All Categories -----")
     genres = curser.execute("SELECT DISTINCT genre FROM Books")
     for genre in genres:
         print("- ", genre[0])
@@ -148,8 +163,8 @@ def viewAllCategories():
 
 # After login - Menu option 3
 def viewShoppingCart():
-    print("----- Shopping cart -----")
-    print("TODO: GET BOOKS IN SHOPPING CART FROM CARTS TABLE")
+    print("----- Shopping Cart -----")
+    print("TODO: GET BOOKS IN USER'S SHOPPING CART FROM CARTS TABLE")
     print("1. Go back")
     print("2. Remove book from cart")
     print("3. Checkout")
@@ -190,7 +205,7 @@ def logout():
     beforeLoginMenu()
 
 def seeAllBooksForGenre(genre):
-    print("----- All books for ", genre, "-----")
+    print("----- All Books for ", genre, "-----")
     print("TODO: GET BOOKS FOR genre FROM BOOKS TABLE")
     print("1. Go back")
     print("2. Add book to cart")
@@ -232,19 +247,60 @@ def deleteAccount():
     logout()
 
 # Before login, option 4 for test
-def viewAllUsers():
+def adminViewAllUsers():
+    print("----- Admin: Users Table -----")
     curser.execute("SELECT * FROM Users")
     users = curser.fetchall()
-    index = 1
-    for user in users:
-        print(str(index) + ". " + user[0] + ", " + user[3])
-        index += 1
-    print("\n1. Go back")
-    option = input()
-    if option == "1":
-        beforeLoginMenu()
+
+    if len(users) == 0:
+        print("No items have been added to this table")
     else:
-        beforeLoginMenu()
+        index = 1
+        for user in users:
+            print(str(index) + ". userID: " + user[0] + ", user name: " + user[3])
+            index += 1
+
+# Before login, option 5 for test
+def adminViewAllBooks():
+    print("----- Admin: Books Table -----")
+    curser.execute("SELECT * FROM Books")
+    books = curser.fetchall()
+
+    if len(books) == 0:
+        print("No items have been added to this table")
+    else:
+        index = 1
+        for book in books:
+            print(str(index) + ". bookID: " + book[0] + ", title:" + book[2])
+            index += 1
+
+# Before login, option 6 for test
+def adminViewAllCarts():
+    print("----- Admin: Carts Table -----")
+    curser.execute("SELECT * FROM Carts")
+    carts = curser.fetchall()
+
+    if len(carts) == 0:
+        print("No items have been added to this table")
+    else:
+        index = 1
+        for cartItem in carts:
+            print(str(index) + ". " + "bookID: " + cartItem[1] + ", userID: " + cartItem[2])
+            index += 1
+
+# Before login, option 7 for test
+def adminViewAllOrderHistory():
+    print("----- Admin: Order History Table -----")
+    curser.execute("SELECT * FROM OrderHistory")
+    histories = curser.fetchall()
+
+    if len(histories) == 0:
+        print("No items have been added to this table")
+    else:
+        index = 1
+        for historyItem in histories:
+            print(str(index) + ". " + "userID: " + historyItem[1] + ", bookID: " + historyItem[2])
+            index += 1
 
 # Start program
 connection = sqlite3.connect("LibraryProject.db")
