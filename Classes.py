@@ -3,7 +3,6 @@ from main import connection
 from main import cursor
 import uuid
 
-
 class Admin:
     @staticmethod
     def createAllTables():
@@ -272,10 +271,6 @@ class User:
             User.logout()
         elif option == "6":
             User.deleteAccount()
-
-    @staticmethod
-    def deleteAccount():
-        print("TODO: DELETE ACCOUNT")
 
 class Book:
 
