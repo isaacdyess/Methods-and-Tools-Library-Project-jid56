@@ -9,9 +9,9 @@ class Admin:
         cursor.execute(
             "CREATE TABLE IF NOT EXISTS Users(id TEXT PRIMARY KEY, firstName TEXT, lastName TEXT, userName TEXT, password TEXT, address TEXT, creditCardNumber TEXT)")
         cursor.execute(
-            "CREATE TABLE IF NOT EXISTS Books(id TEXT PRIMARY KEY, ISBN TEXT, title TEXT, author TEXT, cat TEXT, stock INTEGER)")
+            "CREATE TABLE IF NOT EXISTS Books(id TEXT PRIMARY KEY, ISBN TEXT, title TEXT, author TEXT, genre TEXT, stock INTEGER)")
         cursor.execute("CREATE TABLE IF NOT EXISTS Carts(id TEXT PRIMARY KEY, bookID TEXT, userID TEXT)")
-        cursor.execute("CREATE TABLE IF NOT EXISTS OrderHistory(id TEXT PRIMARY KEY, userID TEXT, bookID TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS OrderHistory(id TEXT PRIMARY KEY, bookID TEXT, userID TEXT)")
         connection.commit()
 
     @staticmethod
@@ -58,44 +58,50 @@ class Admin:
 
     @staticmethod
     def viewUserTable():
-        print("----- Admin: Users Table -----")
+        print("----- Admin: User Table -----")
         cursor.execute("SELECT * FROM Users")
         users = cursor.fetchall()
 
         if len(users) == 0:
-            print("No items have been added to this table")
+            print("No items have been added to User table")
         else:
             index = 1
             for user in users:
-                print(str(index) + ". userID: " + user[0] + ", user name: " + user[3])
+                userID = user[0]
+                username = user[3]
+                print(str(index) + ". userID: " + userID + ", user name: " + username)
                 index += 1
 
     @staticmethod
     def viewBookTable():
-        print("----- Admin: Books Table -----")
+        print("----- Admin: Book Table -----")
         cursor.execute("SELECT * FROM Books")
         books = cursor.fetchall()
 
         if len(books) == 0:
-            print("No items have been added to this table")
+            print("No items have been added to Book table")
         else:
             index = 1
             for book in books:
-                print(str(index) + ". bookID: " + book[0] + ", title:" + book[2])
+                bookID = book[0]
+                title = book[2]
+                print(str(index) + ". bookID: " + bookID + ", title:" + title)
                 index += 1
 
     @staticmethod
     def viewCartTable():
-        print("----- Admin: Carts Table -----")
+        print("----- Admin: Cart Table -----")
         cursor.execute("SELECT * FROM Carts")
         carts = cursor.fetchall()
 
         if len(carts) == 0:
-            print("No items have been added to this table")
+            print("No items have been added to Cart table")
         else:
             index = 1
             for cartItem in carts:
-                print(str(index) + ". " + "bookID: " + cartItem[1] + ", userID: " + cartItem[2])
+                bookID = cartItem[1]
+                userID = cartItem[2]
+                print(str(index) + ". " + "bookID: " + bookID + ", userID: " + userID)
                 index += 1
 
     @staticmethod
@@ -105,11 +111,13 @@ class Admin:
         histories = cursor.fetchall()
 
         if len(histories) == 0:
-            print("No items have been added to this table")
+            print("No items have been added to Order History table")
         else:
             index = 1
             for historyItem in histories:
-                print(str(index) + ". " + "userID: " + historyItem[1] + ", bookID: " + historyItem[2])
+                bookID = historyItem[1]
+                userID = historyItem[2]
+                print(str(index) + ". " + "userID: " + userID + ", bookID: " + bookID)
                 index += 1
 
 class Menu:
@@ -126,6 +134,15 @@ class Menu:
         print("7. (ADMIN) View Order History")
 
         option = input()
+        valid = False
+        if option == "1" or option == "2" or option == "3" or option == "4" or option == "5" or option == "6" or option == "7":
+            valid = True
+        while not valid:
+            print("Invalid input. Try again.")
+            option = input()
+            if option == "1" or option == "2" or option == "3" or option == "4" or option == "5" or option == "6" or option == "7":
+                valid = True
+
         if option == "1":
             User.login()
         elif option == "2":
@@ -156,6 +173,15 @@ class Menu:
         print("4. View account")
 
         option = input()
+        valid = False
+        if option == "1" or option == "2" or option == "3" or option == "4":
+            valid = True
+        while not valid:
+            print("Invalid input. Try again.")
+            option = input()
+            if option == "1" or option == "2" or option == "3" or option == "4":
+                valid = True
+
         if option == "1":
             Book.getAllBooks()
         elif option == "2":
@@ -180,6 +206,7 @@ class User:
         password = input("Password: ")
         address = input("Address: ")
         payment = input("Credit card number: ")
+
         cursor.execute("INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?)", (str(uuid.uuid1()), firstName, lastName, username, password, address, payment))
         connection.commit()
         Menu.beforeLoginMenu()
@@ -191,14 +218,26 @@ class User:
         password = input("Password: ")
         cursor.execute("SELECT * FROM Users WHERE userName = (?) AND password = (?)", (username, password,))
         userFetch = cursor.fetchall()
+
         if len(userFetch) == 1:
-            currentUserID = userFetch[0][0][0]
+            currentUser = userFetch[0][0]
+            currentUserID = currentUser[0]
             Menu.afterLoginMenu()
         else:
             print("Error. Please try again.")
             print("1. Go back")
             print("2. Login")
+
             option = input()
+            valid = False
+            if option == "1" or option == "2":
+                valid = True
+            while not valid:
+                print("Invalid input. Try again.")
+                option = input()
+                if option == "1" or option == "2":
+                    valid = True
+
             if option == "1":
                 Menu.beforeLoginMenu()
             elif option == "2":
@@ -223,13 +262,15 @@ class User:
         books = cursor.fetchall()
 
         if len(books) == 0:
-            print("No items have been added to this table")
+            print("No order history")
         else:
             index = 1
             for book in books:
-                cursor.execute("SELECT title FROM Books WHERE id = ?", (book[1],))
-                title = cursor.fetchall()
-                print(str(index) + ". " + title[0][0])
+                bookID = book[0]
+                cursor.execute("SELECT title FROM Books WHERE id = ?", (bookID,))
+                book = cursor.fetchall()[0]
+                title = book[0]
+                print(str(index) + ". " + title)
                 index += 1
         User.viewAccount()
 
@@ -244,7 +285,6 @@ class User:
     @staticmethod
     def changePaymentInfo():
         newPaymentInfo = input("Enter new credit card number: ")
-        print("Updating payment info.\n")
         cursor.execute("UPDATE Users SET creditCardNumber = ? WHERE id = ?", (newPaymentInfo, currentUserID))
         connection.commit()
         User.viewAccount()
@@ -258,7 +298,17 @@ class User:
         print("4. Change payment info")
         print("5. Logout")
         print("6. Delete account")
+
         option = input()
+        valid = False
+        if option == "1" or option == "2" or option == "3" or option == "4" or option == "5" or option == "6":
+            valid = True
+        while not valid:
+            print("Invalid input. Try again.")
+            option = input()
+            if option == "1" or option == "2" or option == "3" or option == "4" or option == "5" or option == "6":
+                valid = True
+
         if option == "1":
             Menu.afterLoginMenu()
         elif option == "2":
@@ -270,7 +320,7 @@ class User:
         elif option == "5":
             User.logout()
         elif option == "6":
-            User.deleteAccount()
+            User.delete()
 
 class Book:
 
@@ -282,29 +332,57 @@ class Book:
         print("----- All Books -----")
         cursor.execute("SELECT * FROM Books")
         books = cursor.fetchall()
+
         index = 1
         for book in books:
-            print(str(index) + ". " + book[2])
+            title = book[2]
+            print(str(index) + ". " + title)
             index += 1
         print("\n1. Go back")
         print("2. Add book to cart")
+
         option = input()
+        valid = False
+        if option == "1" or option == "2":
+            valid = True
+        while not valid:
+            print("Invalid input. Try again.")
+            option = input()
+            if option == "1" or option == "2":
+                valid = True
+
         if option == "1":
             Menu.afterLoginMenu()
         elif option == "2":
-            bookNumber = input("Book #:")
-            Cart.add(books[int(bookNumber) - 1][0])
+            bookIndex = input("Book #:")
+            book = books[int(bookIndex) - 1]
+            bookID = book[0]
+            Cart.add(bookID)
             Menu.afterLoginMenu()
 
     @staticmethod
     def getAllGenres():
-        print("----- All Categories -----")
+        print("----- All Genres -----")
         genres = cursor.execute("SELECT DISTINCT genre FROM Books")
+        index = 1
         for genre in genres:
-            print("- ", genre[0])
-        print("1. Go back")
+            genreName = genre[0]
+            print(str(index) + ". " + genreName)
+            index += 1
+
+        print("\n1. Go back")
         print("2. See all books for specific genre")
+
         option = input()
+        valid = False
+        if option == "1" or option == "2":
+            valid = True
+        while not valid:
+            print("Invalid input. Try again.")
+            option = input()
+            if option == "1" or option == "2":
+                valid = True
+
         if option == "1":
             Menu.afterLoginMenu()
         elif option == "2":
@@ -317,7 +395,17 @@ class Book:
         print("TODO: GET BOOKS FOR genre FROM BOOKS TABLE")
         print("1. Go back")
         print("2. Add book to cart")
+
         option = input()
+        valid = False
+        if option == "1" or option == "2":
+            valid = True
+        while not valid:
+            print("Invalid input. Try again.")
+            option = input()
+            if option == "1" or option == "2":
+                valid = True
+
         if option == "1":
             Book.getAllGenres()
         if option == "2":
@@ -331,29 +419,45 @@ class Cart:
         print("----- Shopping Cart -----")
         cursor.execute("SELECT * FROM Carts WHERE userID = ?", (currentUserID,))
         books = cursor.fetchall()
-        index = 1
-        for book in books:
-            cursor.execute("SELECT title FROM Books WHERE id = ?", (book[1],))
-            title = cursor.fetchall()
-            print(str(index) + ". " + title[0][0])
-            index += 1
 
-        print("\n1. Go back")
-        print("2. Remove book from cart")
-        print("3. Checkout")
-        option = input()
-        if option == "1":
-            Menu.afterLoginMenu()
-        elif option == "2":
-            book = input("Book #: ")
-            cartID = books[int(book) - 1][0]
-            Cart.remove(cartID)
-        elif option == "3":
-            Cart.checkout()
+        if len(books) == 0:
+            print("No books in cart")
+        else:
+            index = 1
+            for book in books:
+                bookID = book[1]
+                cursor.execute("SELECT title FROM Books WHERE id = ?", (bookID,))
+                book = cursor.fetchall()[0]
+                title = book[0]
+                print(str(index) + ". " + title)
+                index += 1
+
+            print("\n1. Go back")
+            print("2. Remove book from cart")
+            print("3. Checkout")
+
+            option = input()
+            valid = False
+            if option == "1" or option == "2" or option == "3":
+                valid = True
+            while not valid:
+                print("Invalid input. Try again.")
+                option = input()
+                if option == "1" or option == "2" or option == "3":
+                    valid = True
+
+            if option == "1":
+                Menu.afterLoginMenu()
+            elif option == "2":
+                bookIndex = input("Book #: ")
+                book = books[int(bookIndex) - 1]
+                cartID = book[0]
+                Cart.remove(cartID)
+            elif option == "3":
+                Cart.checkout()
 
     @staticmethod
     def add(bookID):
-        print("Inserting: " + bookID)
         cursor.execute("INSERT INTO Carts VALUES (?, ?, ?)", (str(uuid.uuid1()), bookID, currentUserID))
         connection.commit()
 
